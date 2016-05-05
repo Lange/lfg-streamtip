@@ -1,7 +1,9 @@
-/* jshint camelcase: false */
 'use strict';
 
-const EventEmitter = require('events').EventEmitter;
+const EventEmitter = require('events');
+const Streamtip = require('streamtip');
+const util = require('./util');
+
 const emitter = new EventEmitter();
 
 module.exports = function (nodecg) {
@@ -14,52 +16,61 @@ module.exports = function (nodecg) {
 		throw new Error('StreamTip accessToken not present in config! Should be a string. Aborting.');
 	}
 
-	const Streamtip = require('streamtip-listener');
-	const listener = new Streamtip({
+	const streamtip = new Streamtip({
 		clientId: nodecg.bundleConfig.clientId,
 		accessToken: nodecg.bundleConfig.accessToken
 	});
-	const tops = nodecg.Replicant('tops', {defaultValue: {}});
+	const tops = nodecg.Replicant('tops', {defaultValue: {monthly: {}, daily: {}}});
 
-	listener.on('connected', () => {
+	// Get what Streamtip believes is current tops, overwrite our own only if they are larger
+	// Reason for this is streams may run over the 'day' boundary, and we don't want to lose current top
+	// if NodeCG should be restarted
+	util.queryTops(streamtip, nodecg.log, stTops => {
+		Object.keys(tops.value).forEach(period => {
+			if (stTops[period] !== null && stTops[period].cents > tops.value[period].cents) {
+				tops.value[period] = stTops[period];
+			}
+		});
+	});
+
+	streamtip.on('connected', () => {
 		nodecg.log.info('Connected to StreamTip');
 	});
 
-	listener.on('authenticated', () => {
+	streamtip.on('authenticated', () => {
 		// Now authenticated, we can expect tip alerts to come through
 		nodecg.log.info('Authenticated with StreamTip');
 	});
 
-	listener.on('authenticationFailed', () => {
+	streamtip.on('authenticationFailed', () => {
 		// ClientID or Access Token was rejected
 		nodecg.log.error('Authentication failed!');
 	});
 
-	listener.on('newTip', tip => {
+	streamtip.on('newTip', tip => {
 		// We got a new tip.
 		// 'tip' is an object which matches the description given on the Streamtip API page
+		const newTops = util.compareTops(tip, tops.value);
+		let top = null;
+		Object.keys(newTops).forEach(period => {
+			if (newTops[period] !== null) {
+				tops.value[period] = newTops[period];
+				top = top ? top : period; // Don't touch top if it's already set
+			}
+		});
+		tip.top = top;
+
 		emitter.emit('tip', tip);
 		nodecg.sendMessage('tip', tip);
 	});
 
-	listener.on('newTop', (period, tip) => {
-		tops.value[period] = tip;
-	});
-
-	listener.on('error', err => {
+	streamtip.on('error', err => {
 		// An unexpected error occurred
 		nodecg.log.error('Error! %s', err.message);
 	});
 
 	emitter.resetPeriod = function (period) {
-		if (tops.value[period]) {
-			try {
-				listener.resetTop(period);
-			} catch (err) {
-				nodecg.log.error('resetPeriod error! %s', err.message);
-			}
-			tops.value[period] = {};
-		}
+		tops.value[period] = {};
 	};
 
 	nodecg.listenFor('resetPeriod', emitter.resetPeriod);

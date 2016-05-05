@@ -6,7 +6,8 @@
   "description": "StreamTip integration",
   "license": "MIT",
   "dependencies": {
-    "streamtip-listener": "^1.3.3"
+    "async": "^1.5.2",
+    "streamtip": "^1.0.1"
   },
   "scripts": {
     "test": "npm run static",
