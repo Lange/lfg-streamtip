@@ -35,9 +35,11 @@
 			max-width: 117px;
 		}
 
-		paper-button:not([disabled]).nodecg-configure {
-			background-color: #A50074;
-			color: white;
+		paper-button {
+			--paper-button: {
+				background-color: #A50074;
+				color: white;
+			};
 		}
 	</style>
 </head>
@@ -47,14 +49,14 @@
 			<h4>DAY TOP</h4>
 			<span class="amount">?</span>
 			<span class="username">?</span>
-			<paper-button nodecg-dialog="reset-daily" class="nodecg-configure" raised>Reset</paper-button>
+			<paper-button nodecg-dialog="reset-daily" raised>Reset</paper-button>
 		</div>
 
 		<div id="monthly" class="column" style="margin-left: 4px;">
 			<h4>MONTH TOP</h4>
 			<span class="amount">?</span>
 			<span class="username">?</span>
-			<paper-button nodecg-dialog="reset-monthly" class="nodecg-configure" raised>Reset</paper-button>
+			<paper-button nodecg-dialog="reset-monthly" raised>Reset</paper-button>
 		</div>
 	</div>
 
