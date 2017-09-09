@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<link rel="stylesheet" href="components/paper-styles/paper-styles.html">
-	<link rel="import" href="components/paper-button/paper-button.html">
+	<link rel="stylesheet" href="../bower_components/paper-styles/paper-styles.html">
+	<link rel="import" href="../bower_components/paper-button/paper-button.html">
 	<style is="custom-style">
 		paper-button {
 			margin-top: 8px;
@@ -12,7 +12,7 @@
 		}
 
 		h4 {
-			margin-bottom: 0;
+			margin: 0;
 		}
 
 		.column {
@@ -33,6 +33,11 @@
 			overflow: hidden;
 			text-overflow: ellipsis;
 			max-width: 117px;
+		}
+
+		paper-button:not([disabled]).nodecg-configure {
+			background-color: #A50074;
+			color: white;
 		}
 	</style>
 </head>
